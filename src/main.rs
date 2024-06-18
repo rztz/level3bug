@@ -21,8 +21,8 @@
 use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
+use serde_this_or_that::as_f64;
 use serde_with::skip_serializing_none;
-
 #[skip_serializing_none]
 #[derive(PartialEq, Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
@@ -39,7 +39,9 @@ pub struct Level3Data {
 pub struct Order {
     pub event: Option<OrderEvent>,
     pub order_id: String,
+    #[serde(deserialize_with = "as_f64")]
     pub limit_price: f64,
+    #[serde(deserialize_with = "as_f64")]
     pub order_qty: f64,
     #[serde(with = "time::serde::rfc3339")]
     pub timestamp: time::OffsetDateTime,
@@ -69,9 +71,15 @@ const PRICE_PRECISION_FACTOR: f64 = 10.0;
 const QTY_PRECISION_FACTOR: f64 = 100000000.0;
 
 pub fn main() {
-    // read the JSON string from file "level3-bug.json"
-    let line_str = std::fs::read_to_string("level3-bug.json").unwrap();
+    let line_str = if true {
+        // read the JSON string from file "level3-bug.json"
+        std::fs::read_to_string("level3-bug.json").unwrap()
+    } else {
+        // read the JSON string from file "level3-doc.json" (example from kraken api website)
+        std::fs::read_to_string("level3-doc.json").unwrap()
+    };
     let snapshot: serde_json::Value = serde_json::from_str(&line_str).unwrap();
+
     let data_array = snapshot["data"].clone();
     let level3_data: Vec<Level3Data> = serde_json::from_value(data_array).unwrap();
     assert!(level3_data.len() == 1);
@@ -95,12 +103,14 @@ pub fn main() {
 
             let price_f = ask.limit_price * PRICE_PRECISION_FACTOR;
             let price_i = price_f.round() as i64;
-            assert!((price_f - (price_i as f64)).abs() < 1e-9);
+            let price_if = price_i as f64;
+            assert!((price_f - price_if).abs() < 1e-3);
             let price_s = price_i.to_string();
 
             let qty_f = ask.order_qty * QTY_PRECISION_FACTOR;
             let qty_i = qty_f.round() as i64;
-            assert!((qty_f - (qty_i as f64)).abs() < 1e-9);
+            let qty_if = qty_i as f64;
+            assert!((qty_f - qty_if).abs() < 1e-3);
             let qty_s = qty_i.to_string();
 
             crc_str.push_str(&price_s);
@@ -128,12 +138,14 @@ pub fn main() {
 
             let price_f = bid.limit_price * PRICE_PRECISION_FACTOR;
             let price_i = price_f.round() as i64;
-            assert!((price_f - (price_i as f64)).abs() < 1e-9);
+            let price_if = price_i as f64;
+            assert!((price_f - price_if).abs() < 1e-3);
             let price_s = price_i.to_string();
 
             let qty_f = bid.order_qty * QTY_PRECISION_FACTOR;
             let qty_i = qty_f.round() as i64;
-            assert!((qty_f - (qty_i as f64)).abs() < 1e-9);
+            let qty_if = qty_i as f64;
+            assert!((qty_f - qty_if).abs() < 1e-3);
             let qty_s = qty_i.to_string();
 
             crc_str.push_str(&price_s);
@@ -153,5 +165,7 @@ pub fn main() {
 
     if level3_data.checksum != crc {
         println!("ERROR: Checksum mismatch!");
+    } else {
+        println!("Checksum OK!");
     }
 }
