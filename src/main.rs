@@ -71,7 +71,12 @@ const PRICE_PRECISION_FACTOR: f64 = 10i64.pow(1) as f64;
 const QTY_PRECISION_FACTOR: f64 = 10i64.pow(8) as f64;
 
 pub fn main() {
-    let line_str = if true {
+    // to parse buggy json run: cargo run
+    // to parse api docs reference json run: cargo run -- ref
+
+    let use_reference = std::env::args().nth(1).map_or(false, |arg| arg == "ref");
+
+    let line_str = if !use_reference {
         // read the JSON string from file "level3-bug.json"
         std::fs::read_to_string("level3-bug.json").unwrap()
     } else {
@@ -160,6 +165,15 @@ pub fn main() {
     println!("===============================================================================");
     println!("json level3_data.checksum: {}", level3_data.checksum);
     println!("crc_str: {}", crc_str);
+    if use_reference {
+        let ref_str = "44939545230839344939511126144939510000044939510000004495001033492644953064537449550250000449596356300004495963563000044960133807244960288967575449670314392283449785677896044979235630000449394889686994493944521000044939410000000449394142963234493942500000044939410292988449394338800004493941281408604493713346877449347356300004493022273429944930210000004493025550000449302700000004493021500000044928010524044919633870000449195761000044912035630000449097669000044901988982";
+        println!("ref_str: {}", ref_str);
+        if crc_str == ref_str {
+            println!("crc_str matches reference string!");
+        } else {
+            println!("ERROR: crc_str does not match reference string!");
+        }
+    }
     let crc = crc32fast::hash(crc_str.as_bytes());
     println!("crc: {}", crc);
 
