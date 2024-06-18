@@ -76,12 +76,12 @@ pub fn main() {
 
     let use_reference = std::env::args().nth(1).map_or(false, |arg| arg == "ref");
 
-    let line_str = if !use_reference {
-        // read the JSON string from file "level3-bug.json"
-        std::fs::read_to_string("level3-bug.json").unwrap()
-    } else {
+    let line_str = if use_reference {
         // read the JSON string from file "level3-doc.json" (example from kraken api website)
         std::fs::read_to_string("level3-doc.json").unwrap()
+    } else {
+        // read the JSON string from file "level3-bug.json"
+        std::fs::read_to_string("level3-bug.json").unwrap()
     };
     let snapshot: serde_json::Value = serde_json::from_str(&line_str).unwrap();
 
