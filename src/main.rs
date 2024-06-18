@@ -67,8 +67,8 @@ pub enum OrderEvent {
     Delete,
 }
 
-const PRICE_PRECISION_FACTOR: f64 = 10.0;
-const QTY_PRECISION_FACTOR: f64 = 100000000.0;
+const PRICE_PRECISION_FACTOR: f64 = 10i64.pow(1) as f64;
+const QTY_PRECISION_FACTOR: f64 = 10i64.pow(8) as f64;
 
 pub fn main() {
     let line_str = if true {
