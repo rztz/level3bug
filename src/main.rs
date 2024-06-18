@@ -28,7 +28,7 @@ pub struct Order {
 impl Debug for Order {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!(
-            "{}: {:12} @ {:7}",
+            "{}: {:12} @ {:<7}",
             self.order_id, self.order_qty, self.limit_price
         ))
     }
