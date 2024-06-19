@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use std::fmt::Debug;
+use std::{collections::BTreeMap, fmt::Debug};
 
 use serde::{Deserialize, Serialize};
 use serde_this_or_that::as_f64;
@@ -50,8 +50,11 @@ pub struct Order {
 impl Debug for Order {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!(
-            "{}: {:12.8} @ {:<7.1}",
-            self.order_id, self.order_qty, self.limit_price
+            "{}: {:12.8} @ {:<7.1} {:.6}",
+            self.order_id,
+            self.order_qty,
+            self.limit_price,
+            self.timestamp.unix_timestamp_nanos() as f64 / 1.0e9
         ))
     }
 }
@@ -101,7 +104,7 @@ pub fn main() {
             if ask.limit_price != curr_price {
                 curr_price = ask.limit_price;
                 price_level_count += 1;
-                if price_level_count > 10 {
+                if price_level_count > 13 {
                     break;
                 }
             }
@@ -118,13 +121,27 @@ pub fn main() {
             assert!((qty_f - qty_if).abs() < 1e-3);
             let qty_s = qty_i.to_string();
 
-            crc_str.push_str(&price_s);
-            crc_str.push_str(&qty_s);
-
-            println!(
-                "Ask level {:2}: {:?} | price_s: {} qty_s: {:>11}",
-                price_level_count, ask, price_s, qty_s
-            );
+            if use_reference {
+                if price_level_count < 11 {
+                    crc_str.push_str(&price_s);
+                    crc_str.push_str(&qty_s);
+                    println!(
+                        "Ask level {:2}: {:?} | price_s: {} qty_s: {:>11}",
+                        price_level_count, ask, price_s, qty_s
+                    );
+                } else {
+                    println!("(ignore Ask level {:2}: {:?})", price_level_count, ask);
+                }
+            } else if price_level_count < 13 && price_level_count != 10 && price_level_count != 11 {
+                crc_str.push_str(&price_s);
+                crc_str.push_str(&qty_s);
+                println!(
+                    "Ask level {:2}: {:?} | price_s: {} qty_s: {:>11}",
+                    price_level_count, ask, price_s, qty_s
+                );
+            } else {
+                println!("(ignore Ask level {:2}: {:?})", price_level_count, ask);
+            }
         }
     }
     println!("--------------------------------------------------------------------------------");
@@ -136,7 +153,7 @@ pub fn main() {
             if bid.limit_price != curr_price {
                 curr_price = bid.limit_price;
                 price_level_count += 1;
-                if price_level_count > 10 {
+                if price_level_count > 12 {
                     break;
                 }
             }
@@ -153,13 +170,16 @@ pub fn main() {
             assert!((qty_f - qty_if).abs() < 1e-3);
             let qty_s = qty_i.to_string();
 
-            crc_str.push_str(&price_s);
-            crc_str.push_str(&qty_s);
-
-            println!(
-                "Bid level {:2}: {:?} | price_s: {} qty_s: {:>11}",
-                price_level_count, bid, price_s, qty_s
-            );
+            if price_level_count < 11 {
+                crc_str.push_str(&price_s);
+                crc_str.push_str(&qty_s);
+                println!(
+                    "Bid level {:2}: {:?} | price_s: {} qty_s: {:>11}",
+                    price_level_count, bid, price_s, qty_s
+                );
+            } else {
+                println!("(ignore Bid level {:2}: {:?})", price_level_count, bid);
+            }
         }
     }
     println!("===============================================================================");
